@@ -1,7 +1,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include <cstdlib>
+#include <chrono>
+#include <random>
 
 using namespace std;
 
@@ -9,6 +10,8 @@ using namespace std;
 #define		DRAM_SIZE		(64*1024*1024)
 #define		CACHE_SIZE		(32*1024)
 
+
+std::mt19937 generator;
 
 enum cacheResType { MISS = 0, HIT = 1 };
 
@@ -45,6 +48,13 @@ unsigned int memGen4()
 	return (addr++) % (1024 * 64);
 }
 
+unsigned int (*genFunctions[4])() = {
+	memGen1,
+	memGen2,
+	memGen3,
+	memGen4
+};
+
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
@@ -73,7 +83,7 @@ cacheResType cacheSimFA(unsigned int addr)
 			return HIT;
 	}
 
-	int blockReplaced = rand() % blockNumber;
+	int blockReplaced = generator() % blockNumber;
 
 	cacheBlocks[blockReplaced].tag = tag;
 	cacheBlocks[blockReplaced].valid = true;
@@ -94,44 +104,32 @@ void runCacheBlockSize(int blockSize)
 
 	unsigned int addr;
 	cout << "Fully Associative Cache Simulator\n";
-	int hits1 = 0;
-	int hits2 = 0;
-	int hits3 = 0;
-	int hits4 = 0;
+	int hits[4]{};
 	for (int inst = 0; inst < 1000000; inst++)
 	{
-		addr = memGen1();
-		r = cacheSimFA(addr);
-		if (r == HIT)
-			hits1++;
-
-		addr = memGen2();
-		r = cacheSimFA(addr);
-		if (r == HIT)
-			hits2++;
-
-		addr = memGen3();
-		r = cacheSimFA(addr);
-		if (r == HIT)
-			hits3++;
-
-		addr = memGen4();
-		r = cacheSimFA(addr);
-		if (r == HIT)
-			hits4++;
+		for (int i = 0; i < 4; ++i)
+		{
+			addr = genFunctions[i]();
+			r = cacheSimFA(addr);
+			if (r == HIT)
+				hits[i]++;
+		}
 	}
 
-	cout << "memGen1 Hits: " << hits1 << endl;
-	cout << "memGen2 Hits: " << hits2 << endl;
-	cout << "memGen3 Hits: " << hits3 << endl;
-	cout << "memGen4 Hits: " << hits4 << endl << endl;
+	cout << "memGen1 Hits: " << hits[0] << endl;
+	cout << "memGen2 Hits: " << hits[1] << endl;
+	cout << "memGen3 Hits: " << hits[2] << endl;
+	cout << "memGen4 Hits: " << hits[3] << endl << endl;
 
 	delete[] cacheBlocks;
 }
 
+
 int main()
 {
-	srand(time(NULL));
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+	generator = std::mt19937(seed);
 
 	for (int i = 8; i <= 128; i *= 2)
 	{
