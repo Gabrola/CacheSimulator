@@ -10,8 +10,7 @@ using namespace std;
 #define		DRAM_SIZE		(64*1024*1024)
 #define		CACHE_SIZE		(32*1024)
 
-
-std::mt19937 generator;
+std::mt19937 generator(unsigned int(std::chrono::system_clock::now().time_since_epoch().count()));
 
 enum cacheResType { MISS = 0, HIT = 1 };
 
@@ -96,7 +95,7 @@ void runCacheBlockSize(int blockSize)
 	cout << "Cache line size: " << blockSize << endl;
 
 	blockNumber = CACHE_SIZE / blockSize;
-	shiftAmount = log2(blockSize);
+	shiftAmount = int(log2(blockSize));
 
 	cacheBlocks = new FullyAssociativeLine[blockNumber]{};
 
@@ -127,10 +126,6 @@ void runCacheBlockSize(int blockSize)
 
 int main()
 {
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-
-	generator = std::mt19937(seed);
-
 	for (int i = 8; i <= 128; i *= 2)
 	{
 		runCacheBlockSize(i);
