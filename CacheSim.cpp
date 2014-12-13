@@ -54,10 +54,30 @@ unsigned int (*genFunctions[4])() = {
 	memGen4
 };
 
+struct DirectMappedLine
+{
+	unsigned int index;
+	bool valid = false;
+	unsigned int tag;
+};
+
+DirectMappedLine* blocks;
+
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
+	int index = (addr >> shiftAmount) & (CACHE_SIZE-1);//2
+	int tag=addr >> shiftAmount;
 
+	for (int i = 0; i < blockNumber; ++i)
+	{
+		if (blocks[index].valid!=0&&blocks[index].tag==tag)
+			return HIT;
+	}
+	
+	blocks[index].tag=tag;
+	blocks[index].valid=true;
+	
 	return MISS;
 }
 
@@ -98,7 +118,7 @@ void runCacheBlockSize(int blockSize)
 	shiftAmount = int(log2(blockSize));
 
 	cacheBlocks = new FullyAssociativeLine[blockNumber]{};
-
+	blocks = new DirectMappedLine[blockNumber]{};
 	cacheResType r;
 
 	unsigned int addr;
