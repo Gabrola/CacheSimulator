@@ -1,6 +1,6 @@
 #include <iostream>
 #include <iomanip>
-#include <cmath>
+#include <ctgmath>
 #include <chrono>
 #include <random>
 
@@ -63,6 +63,9 @@ struct DirectMappedLine
 
 DirectMappedLine* blocks;
 
+int blockNumber;
+int shiftAmount;
+
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
@@ -88,8 +91,6 @@ struct FullyAssociativeLine
 };
 
 FullyAssociativeLine* cacheBlocks;
-int blockNumber;
-int shiftAmount;
 
 // Fully Associative Cache Simulator
 cacheResType cacheSimFA(unsigned int addr)
