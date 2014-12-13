@@ -57,29 +57,30 @@ unsigned int (*genFunctions[4])() = {
 struct DirectMappedLine
 {
 	unsigned int index;
-	bool valid = false;
+	bool valid;
 	unsigned int tag;
+
+	DirectMappedLine() : valid(false) {}
 };
 
-DirectMappedLine* blocks;
+DirectMappedLine* dmBlocks;
 
 int blockNumber;
 int shiftAmount;
+int shiftAmountIndex;
 
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
-	int index = (addr >> shiftAmount) & ((CACHE_SIZE/blockNumber)-1);
-	int tag=addr >> shiftAmount;
+	int blockSize = CACHE_SIZE / blockNumber;
+	int index = (addr / blockSize) % blockNumber;
+	int tag = (addr >> shiftAmount) >> shiftAmountIndex;
 
-	for (int i = 0; i < blockNumber; ++i)
-	{
-		if (blocks[index].valid!=0&&blocks[index].tag==tag)
-			return HIT;
-	}
+	if (dmBlocks[index].valid && dmBlocks[index].tag == tag)
+		return HIT;
 	
-	blocks[index].tag=tag;
-	blocks[index].valid=true;
+	dmBlocks[index].tag = tag;
+	dmBlocks[index].valid = true;
 	
 	return MISS;
 }
@@ -87,10 +88,12 @@ cacheResType cacheSimDM(unsigned int addr)
 struct FullyAssociativeLine
 {
 	unsigned int tag;
-	bool valid = false;
+	bool valid;
+
+	FullyAssociativeLine() : valid(false) {}
 };
 
-FullyAssociativeLine* cacheBlocks;
+FullyAssociativeLine* faBlocks;
 
 // Fully Associative Cache Simulator
 cacheResType cacheSimFA(unsigned int addr)
@@ -99,14 +102,14 @@ cacheResType cacheSimFA(unsigned int addr)
 
 	for (int i = 0; i < blockNumber; ++i)
 	{
-		if (cacheBlocks[i].tag == tag && cacheBlocks[i].valid)
+		if (faBlocks[i].tag == tag && faBlocks[i].valid)
 			return HIT;
 	}
 
 	int blockReplaced = generator() % blockNumber;
 
-	cacheBlocks[blockReplaced].tag = tag;
-	cacheBlocks[blockReplaced].valid = true;
+	faBlocks[blockReplaced].tag = tag;
+	faBlocks[blockReplaced].valid = true;
 
 	return MISS;
 }
@@ -117,31 +120,46 @@ void runCacheBlockSize(int blockSize)
 
 	blockNumber = CACHE_SIZE / blockSize;
 	shiftAmount = int(log2(blockSize));
+	shiftAmountIndex = int(log2(blockNumber));
 
-	cacheBlocks = new FullyAssociativeLine[blockNumber]{};
-	blocks = new DirectMappedLine[blockNumber]{};
-	cacheResType r;
+	faBlocks = new FullyAssociativeLine[blockNumber]{};
+	dmBlocks = new DirectMappedLine[blockNumber]{};
+
+	cacheResType rDM;
+	cacheResType rFA;
 
 	unsigned int addr;
-	cout << "Fully Associative Cache Simulator\n";
-	int hits[4]{};
+	int hitsDM[4]{};
+	int hitsFA[4]{};
 	for (int inst = 0; inst < 1000000; inst++)
 	{
 		for (int i = 0; i < 4; ++i)
 		{
 			addr = genFunctions[i]();
-			r = cacheSimFA(addr);
-			if (r == HIT)
-				hits[i]++;
+			rDM = cacheSimDM(addr);
+			rFA = cacheSimFA(addr);
+
+			if (rFA == HIT)
+				hitsFA[i]++;
+
+			if (rDM == HIT)
+				hitsDM[i]++;
 		}
 	}
 
-	cout << "memGen1 Hits: " << hits[0] << endl;
-	cout << "memGen2 Hits: " << hits[1] << endl;
-	cout << "memGen3 Hits: " << hits[2] << endl;
-	cout << "memGen4 Hits: " << hits[3] << endl << endl;
+	cout << "Fully Associative Cache:\n";
+	cout << "memGen1 Hits: " << hitsFA[0] << endl;
+	cout << "memGen2 Hits: " << hitsFA[1] << endl;
+	cout << "memGen3 Hits: " << hitsFA[2] << endl;
+	cout << "memGen4 Hits: " << hitsFA[3] << endl << endl;
 
-	delete[] cacheBlocks;
+	cout << "Direct Mapped Cache:\n";
+	cout << "memGen1 Hits: " << hitsDM[0] << endl;
+	cout << "memGen2 Hits: " << hitsDM[1] << endl;
+	cout << "memGen3 Hits: " << hitsDM[2] << endl;
+	cout << "memGen4 Hits: " << hitsDM[3] << endl << endl;
+
+	delete[] faBlocks;
 }
 
 
