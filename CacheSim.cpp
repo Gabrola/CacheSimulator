@@ -66,7 +66,7 @@ DirectMappedLine* blocks;
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
-	int index = (addr >> shiftAmount) & (CACHE_SIZE-1);//2
+	int index = (addr >> shiftAmount) & ((CACHE_SIZE/blockNumber)-1);
 	int tag=addr >> shiftAmount;
 
 	for (int i = 0; i < blockNumber; ++i)
