@@ -1,6 +1,6 @@
 #include <iostream>
 #include <iomanip>
-#include <ctgmath>
+#include <cmath>
 #include <chrono>
 #include <random>
 
@@ -10,6 +10,7 @@ using namespace std;
 #define		DRAM_SIZE		(64*1024*1024)
 #define		CACHE_SIZE		(32*1024)
 
+//Better RNG
 std::mt19937 generator(unsigned int(std::chrono::system_clock::now().time_since_epoch().count()));
 
 enum cacheResType { MISS = 0, HIT = 1 };
@@ -54,16 +55,18 @@ unsigned int (*genFunctions[4])() = {
 	memGen4
 };
 
-struct DirectMappedLine
+struct CacheLine
 {
-	unsigned int index;
-	bool valid;
 	unsigned int tag;
+	bool valid;
 
-	DirectMappedLine() : valid(false) {}
+	//No need to include data, we are just simulating hit rates
+
+	CacheLine() : valid(false) {}
 };
 
-DirectMappedLine* dmBlocks;
+CacheLine* dmBlocks;
+CacheLine* faBlocks;
 
 int blockNumber;
 int shiftAmount;
@@ -84,16 +87,6 @@ cacheResType cacheSimDM(unsigned int addr)
 	
 	return MISS;
 }
-
-struct FullyAssociativeLine
-{
-	unsigned int tag;
-	bool valid;
-
-	FullyAssociativeLine() : valid(false) {}
-};
-
-FullyAssociativeLine* faBlocks;
 
 // Fully Associative Cache Simulator
 cacheResType cacheSimFA(unsigned int addr)
@@ -119,11 +112,11 @@ void runCacheBlockSize(int blockSize)
 	cout << "Cache line size: " << blockSize << endl;
 
 	blockNumber = CACHE_SIZE / blockSize;
-	shiftAmount = int(log2(blockSize));
-	shiftAmountIndex = int(log2(blockNumber));
+	shiftAmount = int(log(blockSize) / log(2));
+	shiftAmountIndex = int(log(blockNumber) / log(2));
 
-	faBlocks = new FullyAssociativeLine[blockNumber]{};
-	dmBlocks = new DirectMappedLine[blockNumber]{};
+	faBlocks = new CacheLine[blockNumber]{};
+	dmBlocks = new CacheLine[blockNumber]{};
 
 	cacheResType rDM;
 	cacheResType rFA;
@@ -160,6 +153,7 @@ void runCacheBlockSize(int blockSize)
 	cout << "memGen4 Hits: " << hitsDM[3] << endl << endl;
 
 	delete[] faBlocks;
+	delete[] dmBlocks;
 }
 
 
