@@ -71,11 +71,11 @@ CacheLine* faBlocks;
 int blockNumber;
 int shiftAmount;
 int shiftAmountIndex;
+int blockSize;
 
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
-	int blockSize = CACHE_SIZE / blockNumber;
 	int index = (addr / blockSize) % blockNumber;
 	int tag = (addr >> shiftAmount) >> shiftAmountIndex;
 
@@ -107,7 +107,7 @@ cacheResType cacheSimFA(unsigned int addr)
 	return MISS;
 }
 
-void runCacheBlockSize(int blockSize)
+void runCacheBlockSize()
 {
 	cout << "Cache line size: " << blockSize << endl;
 
@@ -124,9 +124,10 @@ void runCacheBlockSize(int blockSize)
 	unsigned int addr;
 	int hitsDM[4]{};
 	int hitsFA[4]{};
-	for (int inst = 0; inst < 1000000; inst++)
+
+	for (int i = 0; i < 4; ++i)
 	{
-		for (int i = 0; i < 4; ++i)
+		for (int inst = 0; inst < 1000000; inst++)
 		{
 			addr = genFunctions[i]();
 			rDM = cacheSimDM(addr);
@@ -161,6 +162,7 @@ int main()
 {
 	for (int i = 8; i <= 128; i *= 2)
 	{
-		runCacheBlockSize(i);
+		blockSize = i;
+		runCacheBlockSize();
 	}
 }
